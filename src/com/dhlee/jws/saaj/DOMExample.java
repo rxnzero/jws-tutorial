@@ -1,30 +1,30 @@
 package com.dhlee.jws.saaj;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+
+import javax.xml.namespace.QName;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.FactoryConfigurationError;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.MessageFactory;
-import javax.xml.soap.SOAPMessage;
-import javax.xml.soap.SOAPHeader;
+import javax.xml.soap.Name;
+import javax.xml.soap.Node;
 import javax.xml.soap.SOAPBody;
 import javax.xml.soap.SOAPBodyElement;
-import javax.xml.soap.Node;
+import javax.xml.soap.SOAPConstants;
 import javax.xml.soap.SOAPElement;
+import javax.xml.soap.SOAPEnvelope;
+import javax.xml.soap.SOAPHeader;
+import javax.xml.soap.SOAPMessage;
 import javax.xml.soap.Text;
-import javax.xml.soap.Name;
-import javax.xml.namespace.QName;
+
+import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import com.dhlee.jws.soap.SoapMessageUtil;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Iterator;
-import org.w3c.dom.Document;
-import org.w3c.dom.DOMException;
-import org.w3c.dom.NodeList;
 
 public class DOMExample {
     static Document document;
@@ -35,12 +35,21 @@ public class DOMExample {
 //            System.exit(1);
 //        }
     	
+    	// change default namespace prefix
+    	boolean changeSoapEnvNS = true;
+    	String SOAP_1_1_DEFAULT_NS = "SOAP-ENV";
+    	String SOAP_1_2_DEFAULT_NS = "env";
+    	String newNsPrefix = "soapenv";
+    	String SOAP_V11 = "1.1";
+    	String SOAP_V12 = "1.2";
+    	
+    	String version = SOAP_V12;
+    	
     	String filePath = "d:/slide.xml";
     			
         DOMExample de = new DOMExample();
 
         document = null;
-
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
 
@@ -80,21 +89,51 @@ public class DOMExample {
 
         try {
             // Create SOAP 1.1 message factory
-            MessageFactory messageFactory = MessageFactory.newInstance();
-
+            MessageFactory messageFactory = null;
+            
+            if (SOAP_V11.equals(version)) {
+                messageFactory = MessageFactory.newInstance();
+            } else {
+                messageFactory = 
+                    MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL);
+            }
             // Create a message
             SOAPMessage message = messageFactory.createMessage();
-
+            SOAPEnvelope envelope = message.getSOAPPart().getEnvelope();
             // Get the SOAP header from the message and remove it
             SOAPHeader header = message.getSOAPHeader();
             header.detachNode();
-
+            
             // Get the SOAP body from the message
             SOAPBody body = message.getSOAPBody();
 
             // Add the DOM document to the message body
             SOAPBodyElement docElement = body.addDocument(document);
-
+            
+            if(changeSoapEnvNS) {
+            	String defaultNsPrefix = SOAP_1_1_DEFAULT_NS;
+            	if(SOAP_V11.equals(version)) {
+            		defaultNsPrefix = SOAP_1_1_DEFAULT_NS;
+            	}
+            	else {
+            		defaultNsPrefix = SOAP_1_2_DEFAULT_NS;
+            	}
+            	
+            	Iterator nsit = envelope.getNamespacePrefixes();
+            	
+            	while(nsit.hasNext()) {
+            		String nsPrefix = (String)nsit.next();
+            		if(defaultNsPrefix.equals(nsPrefix)) {
+		            	String namespaceURI = envelope.getNamespaceURI();
+		                envelope.removeNamespaceDeclaration(defaultNsPrefix);
+			            envelope.addNamespaceDeclaration(newNsPrefix, namespaceURI);
+			            envelope.setPrefix(newNsPrefix);
+			            header.setPrefix(newNsPrefix);
+			            body.setPrefix(newNsPrefix);
+            		}
+            	}
+            }
+            
             message.saveChanges();
 
             // Get contents using SAAJ APIs

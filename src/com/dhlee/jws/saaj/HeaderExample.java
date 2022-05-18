@@ -11,18 +11,18 @@ import java.util.Iterator;
 
 public class HeaderExample {
     public static void main(String[] args) {
-
-        if (args.length != 1) {
-            System.err.println("Argument required: " + "-Dsoap=<1.1|1.2>");
-            System.exit(1);
-        }
-        
-        String version = args[0];
+    	String version = "1.1";
+//        if (args.length != 1) {
+//            System.err.println("Argument required: " + "-Dsoap=<1.1|1.2>");
+//            System.exit(1);
+//        }
+//        
+//        version = args[0];
         System.out.println("SOAP version is " + version);
-        if (!( version.equals("1.1") || version.equals("1.2") ) ) {
-            System.err.println("Value must be 1.1 or 1.2");
-            System.exit(1);
-        }
+//        if (!( version.equals("1.1") || version.equals("1.2") ) ) {
+//            System.err.println("Value must be 1.1 or 1.2");
+//            System.exit(1);
+//        }
 
         try {
             // Create message factory
@@ -36,7 +36,7 @@ public class HeaderExample {
 
             // Create a message
             SOAPMessage message = messageFactory.createMessage();
-
+            
             // Get the SOAP header from the message and 
             //  add headers to it
             SOAPHeader header = message.getSOAPHeader();
